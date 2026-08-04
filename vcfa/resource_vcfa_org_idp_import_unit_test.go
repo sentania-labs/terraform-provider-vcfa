@@ -7,6 +7,8 @@
 package vcfa
 
 import (
+	"errors"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -27,6 +29,13 @@ func TestResourceVcfaOrgIdpImportSchema(t *testing.T) {
 	}
 	if resource.Schema["role_ids"].Type != schema.TypeSet {
 		t.Fatal("role_ids must use TypeSet")
+	}
+}
+
+func TestOrgIdpImportCreateErrorAddsIdentityProviderHint(t *testing.T) {
+	diagnostics := orgIdpImportCreateError("group", errors.New("ACCESS_TO_RESOURCE_IS_FORBIDDEN: GROUP_USER_MANAGE"))
+	if len(diagnostics) != 1 || !strings.Contains(diagnostics[0].Summary, "OIDC or LDAP identity provider") {
+		t.Fatalf("diagnostics = %#v, want identity provider configuration hint", diagnostics)
 	}
 }
 

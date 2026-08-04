@@ -1,0 +1,1 @@
+- **New Resource:** `vcfa_org_idp_import` to import OIDC or LDAP users and groups with Organization role assignments [GH-106]

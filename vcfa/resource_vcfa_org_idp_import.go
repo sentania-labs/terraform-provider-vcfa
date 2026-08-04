@@ -90,7 +90,6 @@ func resourceVcfaOrgIdpImportCreate(ctx context.Context, d *schema.ResourceData,
 	case "user":
 		config := &types.OpenApiUser{
 			Username:          d.Get("name").(string),
-			NameInSource:      d.Get("name").(string),
 			ProviderType:      d.Get("provider_type").(string),
 			OrgEntityRef:      orgRef,
 			RoleEntityRefs:    roleRefs,
@@ -98,20 +97,19 @@ func resourceVcfaOrgIdpImportCreate(ctx context.Context, d *schema.ResourceData,
 		}
 		created, err := tmClient.CreateUser(config, tenantContext)
 		if err != nil {
-			return diag.Errorf("error creating %s user: %s", labelOrgIdpImport, err)
+			return orgIdpImportCreateError("user", err)
 		}
 		d.SetId(created.User.ID)
 	case "group":
 		config := &types.OpenApiGroup{
 			Name:           d.Get("name").(string),
-			NameInSource:   d.Get("name").(string),
 			ProviderType:   d.Get("provider_type").(string),
 			OrgEntityRef:   orgRef,
 			RoleEntityRefs: roleRefs,
 		}
 		created, err := tmClient.CreateGroup(config, tenantContext)
 		if err != nil {
-			return diag.Errorf("error creating %s group: %s", labelOrgIdpImport, err)
+			return orgIdpImportCreateError("group", err)
 		}
 		d.SetId(created.Group.ID)
 	default:
@@ -119,6 +117,13 @@ func resourceVcfaOrgIdpImportCreate(ctx context.Context, d *schema.ResourceData,
 	}
 
 	return resourceVcfaOrgIdpImportRead(ctx, d, meta)
+}
+
+func orgIdpImportCreateError(principalType string, err error) diag.Diagnostics {
+	if strings.Contains(err.Error(), "GROUP_USER_MANAGE") || strings.Contains(err.Error(), "ACCESS_TO_RESOURCE_IS_FORBIDDEN") {
+		return diag.Errorf("error creating %s %s: %s; verify that the Organization has an OIDC or LDAP identity provider configured and that the caller has the Group / User: Manage right", labelOrgIdpImport, principalType, err)
+	}
+	return diag.Errorf("error creating %s %s: %s", labelOrgIdpImport, principalType, err)
 }
 
 func resourceVcfaOrgIdpImportRead(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

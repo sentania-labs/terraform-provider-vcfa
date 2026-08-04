@@ -9,34 +9,22 @@ description: |-
 
 Provides a resource to import an LDAP or OIDC user or group into an [Organization][vcfa_org] and assign roles without using the portal.
 
-_Used by: **Tenant**_
+_Used by: **Provider**_
 
-The provider instance used by this resource must authenticate to the target Organization. A common workflow creates a local Organization
-administrator with the system-scoped provider, then uses an aliased tenant provider for IdP imports.
+The resource uses the system-scoped provider with Organization tenant context. The target Organization must have an OIDC or LDAP identity
+provider configured before principals can be imported. VCFA may otherwise return a misleading `GROUP_USER_MANAGE` authorization error.
 
 The `name` must match the identity provider claim byte for byte, including case. Changing only the case replaces the imported principal.
 
 ## Example Usage
 
 ```hcl
-provider "vcfa" {
-  alias                = "tenant"
-  user                 = var.org_admin_user
-  password             = var.org_admin_password
-  auth_type            = "integrated"
-  org                  = var.org_name
-  url                  = var.vcfa_url
-  allow_unverified_ssl = var.vcfa_allow_unverified_ssl
-}
-
 data "vcfa_role" "org-admin" {
   org_id = vcfa_org.demo.id
   name   = "Organization Administrator"
 }
 
 resource "vcfa_org_idp_import" "labadmins" {
-  provider = vcfa.tenant
-
   org_id         = vcfa_org.demo.id
   principal_type = "group"
   name           = "labadmins@example.test"
@@ -49,8 +37,6 @@ An imported user can inherit roles from its imported groups:
 
 ```hcl
 resource "vcfa_org_idp_import" "operator" {
-  provider = vcfa.tenant
-
   org_id              = vcfa_org.demo.id
   principal_type      = "user"
   name                = "operator@example.test"

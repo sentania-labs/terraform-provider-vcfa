@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -23,8 +22,6 @@ func TestAccVcfaOrgIdpImport(t *testing.T) {
 
 	params := StringMap{
 		"Testname":          t.Name(),
-		"OrgUser":           "tf-idp-admin",
-		"OrgPassword":       "long-change-ME1",
 		"IdpUser":           "tf-idp-user@example.test",
 		"IdpGroup":          "tf-idp-group@example.test",
 		"WellKnownEndpoint": oidcServerUrl.String(),
@@ -43,16 +40,6 @@ func TestAccVcfaOrgIdpImport(t *testing.T) {
 		return
 	}
 
-	multipleFactories := func() map[string]func() (*schema.Provider, error) {
-		return map[string]func() (*schema.Provider, error){
-			"vcfa": func() (*schema.Provider, error) {
-				return testAccProvider, nil
-			},
-			"vcfatenant": func() (*schema.Provider, error) {
-				return testOrgProvider(params["Testname"].(string), params["OrgUser"].(string), params["OrgPassword"].(string)), nil
-			},
-		}
-	}
 	defer cachedVCDClients.reset()
 
 	importId := func(principalType, name string) resource.ImportStateIdFunc {
@@ -72,7 +59,7 @@ func TestAccVcfaOrgIdpImport(t *testing.T) {
 				Config:            configText1,
 			},
 			{
-				ProviderFactories: multipleFactories(),
+				ProviderFactories: testAccProviders,
 				Config:            configText2,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcfa_org_idp_import.user", "principal_type", "user"),
@@ -87,7 +74,7 @@ func TestAccVcfaOrgIdpImport(t *testing.T) {
 				),
 			},
 			{
-				ProviderFactories: multipleFactories(),
+				ProviderFactories: testAccProviders,
 				Config:            configText3,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcfa_org_idp_import.user", "inherit_group_roles", "false"),
@@ -96,14 +83,14 @@ func TestAccVcfaOrgIdpImport(t *testing.T) {
 				),
 			},
 			{
-				ProviderFactories: multipleFactories(),
+				ProviderFactories: testAccProviders,
 				ResourceName:      "vcfa_org_idp_import.user",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importId("user", params["IdpUser"].(string)),
 			},
 			{
-				ProviderFactories: multipleFactories(),
+				ProviderFactories: testAccProviders,
 				ResourceName:      "vcfa_org_idp_import.group",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -131,13 +118,6 @@ data "vcfa_role" "org-user" {
   name   = "Organization User"
 }
 
-resource "vcfa_org_local_user" "admin" {
-  org_id   = vcfa_org.test.id
-  role_ids = [data.vcfa_role.org-admin.id]
-  username = "{{.OrgUser}}"
-  password = "{{.OrgPassword}}"
-}
-
 resource "vcfa_org_oidc" "test" {
   org_id                 = vcfa_org.test.id
   enabled                = true
@@ -157,8 +137,6 @@ resource "vcfa_org_oidc" "test" {
 
 const testAccVcfaOrgIdpImportStep1 = testAccVcfaOrgIdpImportPrerequisites + `
 resource "vcfa_org_idp_import" "user" {
-  provider = vcfatenant
-
   org_id              = vcfa_org.test.id
   principal_type      = "user"
   name                = "{{.IdpUser}}"
@@ -166,26 +144,22 @@ resource "vcfa_org_idp_import" "user" {
   role_ids            = [data.vcfa_role.org-user.id]
   inherit_group_roles = true
 
-  depends_on = [vcfa_org_local_user.admin, vcfa_org_oidc.test]
+  depends_on = [vcfa_org_oidc.test]
 }
 
 resource "vcfa_org_idp_import" "group" {
-  provider = vcfatenant
-
   org_id         = vcfa_org.test.id
   principal_type = "group"
   name           = "{{.IdpGroup}}"
   provider_type  = "OAUTH"
   role_ids       = [data.vcfa_role.org-user.id]
 
-  depends_on = [vcfa_org_local_user.admin, vcfa_org_oidc.test]
+  depends_on = [vcfa_org_oidc.test]
 }
 `
 
 const testAccVcfaOrgIdpImportStep2 = testAccVcfaOrgIdpImportPrerequisites + `
 resource "vcfa_org_idp_import" "user" {
-  provider = vcfatenant
-
   org_id              = vcfa_org.test.id
   principal_type      = "user"
   name                = "{{.IdpUser}}"
@@ -193,18 +167,16 @@ resource "vcfa_org_idp_import" "user" {
   role_ids            = [data.vcfa_role.org-user.id, data.vcfa_role.org-admin.id]
   inherit_group_roles = false
 
-  depends_on = [vcfa_org_local_user.admin, vcfa_org_oidc.test]
+  depends_on = [vcfa_org_oidc.test]
 }
 
 resource "vcfa_org_idp_import" "group" {
-  provider = vcfatenant
-
   org_id         = vcfa_org.test.id
   principal_type = "group"
   name           = "{{.IdpGroup}}"
   provider_type  = "OAUTH"
   role_ids       = [data.vcfa_role.org-user.id, data.vcfa_role.org-admin.id]
 
-  depends_on = [vcfa_org_local_user.admin, vcfa_org_oidc.test]
+  depends_on = [vcfa_org_oidc.test]
 }
 `
