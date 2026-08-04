@@ -74,6 +74,9 @@ func resourceVcfaOrgIdpImport() *schema.Resource {
 
 func resourceVcfaOrgIdpImportCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tmClient := meta.(ClientContainer).tmClient
+	if d.Get("principal_type").(string) == "group" && d.Get("inherit_group_roles").(bool) {
+		return diag.Errorf("'inherit_group_roles' can only be enabled for user principals")
+	}
 	tenantContext, err := getTenantContextFromOrgId(tmClient, d.Get("org_id").(string))
 	if err != nil {
 		return diag.FromErr(err)
@@ -163,6 +166,9 @@ func resourceVcfaOrgIdpImportRead(_ context.Context, d *schema.ResourceData, met
 
 func resourceVcfaOrgIdpImportUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	tmClient := meta.(ClientContainer).tmClient
+	if d.Get("principal_type").(string) == "group" && d.Get("inherit_group_roles").(bool) {
+		return diag.Errorf("'inherit_group_roles' can only be enabled for user principals")
+	}
 	tenantContext, err := getTenantContextFromOrgId(tmClient, d.Get("org_id").(string))
 	if err != nil {
 		return diag.FromErr(err)
