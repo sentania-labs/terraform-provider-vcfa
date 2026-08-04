@@ -2,6 +2,8 @@ module github.com/vmware/terraform-provider-vcfa
 
 go 1.26.4
 
+replace github.com/vmware/go-vcloud-director/v3 => github.com/sentania-labs/go-vcloud-director/v3 v3.1.2-alpha.1.0.20260804014426-dcd46ac5a484
+
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/hashicorp/go-cty v1.5.0

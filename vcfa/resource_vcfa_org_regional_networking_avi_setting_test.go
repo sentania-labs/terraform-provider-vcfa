@@ -62,7 +62,7 @@ func TestAccVcfaOrgRegionalNetworkingAviSetting(t *testing.T) {
 					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "active", "true"),
 					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "service_engine_group_mode", "TENANT_MANAGED"),
 					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "service_engine_quota", "60"),
-					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "application_limit", "10"),
+					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "application_limit", "0"),
 					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "service_engine_group_refs.#", "0"),
 					resource.TestCheckResourceAttrPair("vcfa_org_regional_networking_avi_setting.test", "regional_networking_setting_id", "vcfa_org_regional_networking.test", "id"),
 				),
@@ -73,7 +73,7 @@ func TestAccVcfaOrgRegionalNetworkingAviSetting(t *testing.T) {
 					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "active", "true"),
 					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "service_engine_group_mode", "TENANT_MANAGED"),
 					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "service_engine_quota", "80"),
-					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "application_limit", "20"),
+					resource.TestCheckResourceAttr("vcfa_org_regional_networking_avi_setting.test", "application_limit", "0"),
 				),
 			},
 			{
@@ -92,7 +92,6 @@ resource "vcfa_org_regional_networking_avi_setting" "test" {
   active                          = true
   service_engine_group_mode       = "TENANT_MANAGED"
   service_engine_quota            = 60
-  application_limit               = 10
 }
 `
 
@@ -102,6 +101,5 @@ resource "vcfa_org_regional_networking_avi_setting" "test" {
   active                          = true
   service_engine_group_mode       = "TENANT_MANAGED"
   service_engine_quota            = 80
-  application_limit               = 20
 }
 `

@@ -59,11 +59,9 @@ func resourceVcfaOrgRegionalNetworkingAviSetting() *schema.Resource {
 				Description: fmt.Sprintf("Provider-managed service engine group IDs for %s", labelVcfaOrgRegionalNetworkingAviSetting),
 			},
 			"application_limit": {
-				Type:             schema.TypeInt,
-				Optional:         true,
-				Computed:         true,
-				Description:      fmt.Sprintf("Application limit for %s", labelVcfaOrgRegionalNetworkingAviSetting),
-				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(0)),
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: fmt.Sprintf("Application limit reported for %s", labelVcfaOrgRegionalNetworkingAviSetting),
 			},
 			"status": {
 				Type:        schema.TypeString,
@@ -173,7 +171,6 @@ func getTmOrgRegionalNetworkingAviSettingType(d *schema.ResourceData) (*types.Tm
 
 	mode := d.Get("service_engine_group_mode").(string)
 	quota := d.Get("service_engine_quota").(int)
-	applicationLimit := d.Get("application_limit").(int)
 	groupIds := convertSchemaSetToSliceOfStrings(d.Get("service_engine_group_refs").(*schema.Set))
 
 	if mode == "PROVIDER_MANAGED" && len(groupIds) == 0 {
@@ -183,9 +180,8 @@ func getTmOrgRegionalNetworkingAviSettingType(d *schema.ResourceData) (*types.Tm
 		return nil, fmt.Errorf("'service_engine_group_refs' must be empty when 'service_engine_group_mode' is TENANT_MANAGED")
 	}
 
-	config.ServiceEngineGroupMode = &mode
-	config.ServiceEngineQuota = &quota
-	config.ApplicationLimit = &applicationLimit
+	config.ServiceEngineGroupMode = mode
+	config.ServiceEngineQuota = quota
 	config.ServiceEngineGroupRefs = convertSliceOfStringsToOpenApiReferenceIds(groupIds)
 	return config, nil
 }
@@ -196,14 +192,12 @@ func setTmOrgRegionalNetworkingAviSettingData(d *schema.ResourceData, setting *t
 	}
 
 	dSet(d, "active", setting.Active)
-	if setting.ServiceEngineGroupMode != nil {
-		dSet(d, "service_engine_group_mode", *setting.ServiceEngineGroupMode)
-	}
-	if setting.ServiceEngineQuota != nil {
-		dSet(d, "service_engine_quota", *setting.ServiceEngineQuota)
-	}
+	dSet(d, "service_engine_group_mode", setting.ServiceEngineGroupMode)
+	dSet(d, "service_engine_quota", setting.ServiceEngineQuota)
 	if setting.ApplicationLimit != nil {
 		dSet(d, "application_limit", *setting.ApplicationLimit)
+	} else {
+		dSet(d, "application_limit", 0)
 	}
 	if setting.Status != nil {
 		dSet(d, "status", *setting.Status)
@@ -211,11 +205,9 @@ func setTmOrgRegionalNetworkingAviSettingData(d *schema.ResourceData, setting *t
 		dSet(d, "status", "")
 	}
 
-	if setting.ServiceEngineGroupRefs != nil {
-		groupIds := extractIdsFromOpenApiReferences(setting.ServiceEngineGroupRefs)
-		if err := d.Set("service_engine_group_refs", groupIds); err != nil {
-			return fmt.Errorf("error storing 'service_engine_group_refs': %s", err)
-		}
+	groupIds := extractIdsFromOpenApiReferences(setting.ServiceEngineGroupRefs)
+	if err := d.Set("service_engine_group_refs", groupIds); err != nil {
+		return fmt.Errorf("error storing 'service_engine_group_refs': %s", err)
 	}
 	return nil
 }

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/vmware/go-vcloud-director/v3/types/v56"
 )
 
 func TestGetTmOrgRegionalNetworkingAviSettingType(t *testing.T) {
@@ -25,7 +26,6 @@ func TestGetTmOrgRegionalNetworkingAviSettingType(t *testing.T) {
 				"active":                    true,
 				"service_engine_group_mode": "TENANT_MANAGED",
 				"service_engine_quota":      60,
-				"application_limit":         10,
 			},
 		},
 		{
@@ -34,7 +34,6 @@ func TestGetTmOrgRegionalNetworkingAviSettingType(t *testing.T) {
 				"active":                    true,
 				"service_engine_group_mode": "PROVIDER_MANAGED",
 				"service_engine_quota":      60,
-				"application_limit":         10,
 				"service_engine_group_refs": []interface{}{"urn:vcloud:serviceEngineGroup:one"},
 			},
 			wantRefs: 1,
@@ -85,9 +84,36 @@ func TestGetTmOrgRegionalNetworkingAviSettingType(t *testing.T) {
 			if len(got.ServiceEngineGroupRefs) != test.wantRefs {
 				t.Fatalf("ServiceEngineGroupRefs count = %d, want %d", len(got.ServiceEngineGroupRefs), test.wantRefs)
 			}
-			if !got.Active && (got.ServiceEngineGroupMode != nil || got.ServiceEngineQuota != nil || got.ApplicationLimit != nil) {
+			if !got.Active && (got.ServiceEngineGroupMode != "" || got.ServiceEngineQuota != 0 || got.ApplicationLimit != nil) {
 				t.Fatal("inactive configuration must use null Avi settings")
 			}
 		})
+	}
+}
+
+func TestSetTmOrgRegionalNetworkingAviSettingDataWithNullableFields(t *testing.T) {
+	data := schema.TestResourceDataRaw(t, resourceVcfaOrgRegionalNetworkingAviSetting().Schema, map[string]interface{}{
+		"regional_networking_setting_id": "urn:vcloud:regionalNetworkingSetting:one",
+		"active":                         true,
+		"service_engine_group_mode":      "TENANT_MANAGED",
+		"service_engine_quota":           60,
+	})
+	setting := &types.TmRegionalNetworkingAviSetting{
+		Active:                 true,
+		ServiceEngineGroupMode: "TENANT_MANAGED",
+		ServiceEngineQuota:     60,
+	}
+
+	if err := setTmOrgRegionalNetworkingAviSettingData(data, setting); err != nil {
+		t.Fatalf("setTmOrgRegionalNetworkingAviSettingData() error = %v", err)
+	}
+	if got := data.Get("application_limit").(int); got != 0 {
+		t.Fatalf("application_limit = %d, want 0 for null API value", got)
+	}
+	if got := data.Get("service_engine_group_refs").(*schema.Set).Len(); got != 0 {
+		t.Fatalf("service_engine_group_refs count = %d, want 0", got)
+	}
+	if got := data.Get("status").(string); got != "" {
+		t.Fatalf("status = %q, want empty string for null API value", got)
 	}
 }

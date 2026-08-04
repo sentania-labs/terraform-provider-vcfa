@@ -48,10 +48,9 @@ The following arguments are supported:
 - `service_engine_group_mode` - (Required) Service engine group management mode. Supported values are `TENANT_MANAGED` and `PROVIDER_MANAGED`.
 - `service_engine_quota` - (Required) Service engine quota assigned to the Organization.
 - `service_engine_group_refs` - (Optional) A set of service engine group IDs. At least one ID is required when `service_engine_group_mode` is `PROVIDER_MANAGED`, and the set must be empty for `TENANT_MANAGED`.
-- `application_limit` - (Optional) Application limit assigned to the Organization.
-
 ## Attribute Reference
 
+- `application_limit` - Application limit reported by VMware Cloud Foundation Automation. A null API value is stored as `0`.
 - `status` - Realization status returned by VMware Cloud Foundation Automation.
 
 ## Importing

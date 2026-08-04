@@ -1,0 +1,1 @@
+- **New Resource:** `vcfa_org_regional_networking_avi_setting` to manage Organization Avi load balancer delegation [GH-000]
