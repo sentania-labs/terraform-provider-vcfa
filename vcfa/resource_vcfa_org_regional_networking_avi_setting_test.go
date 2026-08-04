@@ -8,6 +8,7 @@ package vcfa
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -23,6 +24,9 @@ func TestAccVcfaOrgRegionalNetworkingAviSetting(t *testing.T) {
 	regionHcl, regionHclRef := getRegionHcl(t, vCenterHclRef, nsxManagerHclRef)
 	ipSpaceHcl, ipSpaceHclRef := getIpSpaceHcl(t, regionHclRef, "1", "1")
 	providerGatewayHcl, providerGatewayHclRef := getProviderGatewayHcl(t, regionHclRef, ipSpaceHclRef)
+	if strings.HasPrefix(providerGatewayHclRef, "data.") {
+		ipSpaceHcl = ""
+	}
 	edgeClusterHcl, _ := getEdgeClusterHcl(t, nsxManagerHclRef, regionHclRef)
 
 	params := StringMap{
