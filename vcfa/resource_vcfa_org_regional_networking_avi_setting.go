@@ -182,7 +182,9 @@ func getTmOrgRegionalNetworkingAviSettingType(d *schema.ResourceData) (*types.Tm
 
 	config.ServiceEngineGroupMode = mode
 	config.ServiceEngineQuota = quota
-	config.ServiceEngineGroupRefs = convertSliceOfStringsToOpenApiReferenceIds(groupIds)
+	if len(groupIds) > 0 {
+		config.ServiceEngineGroupRefs = convertSliceOfStringsToOpenApiReferenceIds(groupIds)
+	}
 	return config, nil
 }
 

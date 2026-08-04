@@ -19,6 +19,7 @@ func TestGetTmOrgRegionalNetworkingAviSettingType(t *testing.T) {
 		config    map[string]interface{}
 		wantError bool
 		wantRefs  int
+		wantNil   bool
 	}{
 		{
 			name: "TenantManaged",
@@ -27,6 +28,7 @@ func TestGetTmOrgRegionalNetworkingAviSettingType(t *testing.T) {
 				"service_engine_group_mode": "TENANT_MANAGED",
 				"service_engine_quota":      60,
 			},
+			wantNil: true,
 		},
 		{
 			name: "ProviderManaged",
@@ -64,6 +66,7 @@ func TestGetTmOrgRegionalNetworkingAviSettingType(t *testing.T) {
 				"service_engine_group_mode": "TENANT_MANAGED",
 				"service_engine_quota":      60,
 			},
+			wantNil: true,
 		},
 	}
 
@@ -83,6 +86,9 @@ func TestGetTmOrgRegionalNetworkingAviSettingType(t *testing.T) {
 			}
 			if len(got.ServiceEngineGroupRefs) != test.wantRefs {
 				t.Fatalf("ServiceEngineGroupRefs count = %d, want %d", len(got.ServiceEngineGroupRefs), test.wantRefs)
+			}
+			if (got.ServiceEngineGroupRefs == nil) != test.wantNil {
+				t.Fatalf("ServiceEngineGroupRefs nil = %v, want %v", got.ServiceEngineGroupRefs == nil, test.wantNil)
 			}
 			if !got.Active && (got.ServiceEngineGroupMode != "" || got.ServiceEngineQuota != 0 || got.ApplicationLimit != nil) {
 				t.Fatal("inactive configuration must use null Avi settings")
