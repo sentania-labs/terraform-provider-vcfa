@@ -258,9 +258,9 @@ func resourceVcfaOrgIdpImportDelete(_ context.Context, d *schema.ResourceData, m
 func resourceVcfaOrgIdpImportImport(_ context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	tmClient := meta.(ClientContainer).tmClient
 
-	idParts := strings.SplitN(d.Id(), "/", 3)
-	if len(idParts) != 3 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" {
-		return nil, fmt.Errorf("expected import ID to be <org_id>/<principal_type>/<name>")
+	idParts, err := parseOrgIdpImportId(d.Id(), ImportSeparator)
+	if err != nil {
+		return nil, err
 	}
 	if idParts[1] != "user" && idParts[1] != "group" {
 		return nil, fmt.Errorf("principal type must be either user or group")
@@ -277,11 +277,23 @@ func resourceVcfaOrgIdpImportImport(_ context.Context, d *schema.ResourceData, m
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving %s user: %s", labelOrgIdpImport, err)
 		}
+		if user == nil || user.User == nil {
+			return nil, fmt.Errorf("error retrieving %s user: empty response", labelOrgIdpImport)
+		}
+		if err := validateOrgIdpImportProviderType("user", idParts[2], user.User.ProviderType); err != nil {
+			return nil, err
+		}
 		entityId = user.User.ID
 	} else {
 		group, err := tmClient.GetGroupByName(idParts[2], tenantContext)
 		if err != nil {
 			return nil, fmt.Errorf("error retrieving %s group: %s", labelOrgIdpImport, err)
+		}
+		if group == nil || group.Group == nil {
+			return nil, fmt.Errorf("error retrieving %s group: empty response", labelOrgIdpImport)
+		}
+		if err := validateOrgIdpImportProviderType("group", idParts[2], group.Group.ProviderType); err != nil {
+			return nil, err
 		}
 		entityId = group.Group.ID
 	}
@@ -292,6 +304,21 @@ func resourceVcfaOrgIdpImportImport(_ context.Context, d *schema.ResourceData, m
 	dSet(d, "name", idParts[2])
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func parseOrgIdpImportId(id, separator string) ([]string, error) {
+	idParts := strings.SplitN(id, separator, 3)
+	if len(idParts) != 3 || idParts[0] == "" || idParts[1] == "" || idParts[2] == "" {
+		return nil, fmt.Errorf("expected import ID to be <org_id>%s<principal_type>%s<name>", separator, separator)
+	}
+	return idParts, nil
+}
+
+func validateOrgIdpImportProviderType(principalType, name, providerType string) error {
+	if providerType != "LDAP" && providerType != "OAUTH" {
+		return fmt.Errorf("cannot import %s %q with provider type %q as %s; expected LDAP or OAUTH", principalType, name, providerType, labelOrgIdpImport)
+	}
+	return nil
 }
 
 func setOrgIdpImportUserData(d *schema.ResourceData, user *govcd.OpenApiUser) error {

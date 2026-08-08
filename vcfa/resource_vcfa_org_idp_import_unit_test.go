@@ -39,6 +39,32 @@ func TestOrgIdpImportCreateErrorAddsIdentityProviderHint(t *testing.T) {
 	}
 }
 
+func TestValidateOrgIdpImportProviderType(t *testing.T) {
+	for _, providerType := range []string{"LDAP", "OAUTH"} {
+		if err := validateOrgIdpImportProviderType("user", "user@example.test", providerType); err != nil {
+			t.Fatalf("validateOrgIdpImportProviderType() error = %v for %s", err, providerType)
+		}
+	}
+
+	err := validateOrgIdpImportProviderType("user", "local-user", "LOCAL")
+	if err == nil || !strings.Contains(err.Error(), "provider type \"LOCAL\"") {
+		t.Fatalf("validateOrgIdpImportProviderType() error = %v, want LOCAL rejection", err)
+	}
+}
+
+func TestParseOrgIdpImportIdUsesConfiguredSeparator(t *testing.T) {
+	idParts, err := parseOrgIdpImportId("urn:vcloud:org:one::group::team@example.test", "::")
+	if err != nil {
+		t.Fatalf("parseOrgIdpImportId() error = %v", err)
+	}
+	want := []string{"urn:vcloud:org:one", "group", "team@example.test"}
+	for i := range want {
+		if idParts[i] != want[i] {
+			t.Fatalf("idParts[%d] = %q, want %q", i, idParts[i], want[i])
+		}
+	}
+}
+
 func TestSetOrgIdpImportUserData(t *testing.T) {
 	data := schema.TestResourceDataRaw(t, resourceVcfaOrgIdpImport().Schema, map[string]interface{}{
 		"principal_type": "user",

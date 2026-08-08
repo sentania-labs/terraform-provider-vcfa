@@ -66,10 +66,10 @@ also code generation. See [Importing resources][importing-resources] for more in
 An existing imported principal can be [imported][docs-import] with its Organization ID, principal type, and case-sensitive name:
 
 ```shell
-terraform import vcfa_org_idp_import.imported 'urn:vcloud:org:00000000-0000-0000-0000-000000000000/group/labadmins@example.test'
+terraform import vcfa_org_idp_import.imported 'urn:vcloud:org:00000000-0000-0000-0000-000000000000.group.labadmins@example.test'
 ```
 
-The import syntax always uses `/` separators: `<org_id>/<principal_type>/<name>`.
+The import syntax is `<org_id><separator><principal_type><separator><name>`. The separator defaults to `.` and follows the provider's `import_separator` setting or `VCFA_IMPORT_SEPARATOR` environment variable.
 
 [docs-import]: https://www.terraform.io/docs/import
 [importing-resources]: /providers/vmware/vcfa/latest/docs/guides/importing_resources

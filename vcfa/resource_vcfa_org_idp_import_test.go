@@ -48,7 +48,7 @@ func TestAccVcfaOrgIdpImport(t *testing.T) {
 			if !ok {
 				return "", fmt.Errorf("vcfa_org.test was not found in state")
 			}
-			return fmt.Sprintf("%s/%s/%s", orgResource.Primary.ID, principalType, name), nil
+			return fmt.Sprintf("%s%s%s%s%s", orgResource.Primary.ID, ImportSeparator, principalType, ImportSeparator, name), nil
 		}
 	}
 
