@@ -97,6 +97,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcfa_api_token":                           resourceVcfaApiToken(),                        // 1.0
 	"vcfa_certificate":                         resourceVcfaCertificate(),                     // 1.0
 	"vcfa_org_local_user":                      resourceVcfaLocalUser(),                       // 1.0
+	"vcfa_org_idp_import":                      resourceVcfaOrgIdpImport(),                    // 1.3
 	"vcfa_org_ldap":                            resourceVcfaOrgLdap(),                         // 1.0
 	"vcfa_provider_ldap":                       resourceVcfaProviderLdap(),                    // 1.0
 	"vcfa_supervisor_namespace":                resourceVcfaSupervisorNamespace(),             // 1.0
