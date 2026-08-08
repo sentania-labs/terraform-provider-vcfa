@@ -194,8 +194,12 @@ func setTmOrgRegionalNetworkingAviSettingData(d *schema.ResourceData, setting *t
 	}
 
 	dSet(d, "active", setting.Active)
-	dSet(d, "service_engine_group_mode", setting.ServiceEngineGroupMode)
-	dSet(d, "service_engine_quota", setting.ServiceEngineQuota)
+	if setting.Active || setting.ServiceEngineGroupMode != "" {
+		dSet(d, "service_engine_group_mode", setting.ServiceEngineGroupMode)
+	}
+	if setting.Active || setting.ServiceEngineQuota != 0 {
+		dSet(d, "service_engine_quota", setting.ServiceEngineQuota)
+	}
 	if setting.ApplicationLimit != nil {
 		dSet(d, "application_limit", *setting.ApplicationLimit)
 	} else {
@@ -207,9 +211,11 @@ func setTmOrgRegionalNetworkingAviSettingData(d *schema.ResourceData, setting *t
 		dSet(d, "status", "")
 	}
 
-	groupIds := extractIdsFromOpenApiReferences(setting.ServiceEngineGroupRefs)
-	if err := d.Set("service_engine_group_refs", groupIds); err != nil {
-		return fmt.Errorf("error storing 'service_engine_group_refs': %s", err)
+	if setting.Active || setting.ServiceEngineGroupRefs != nil {
+		groupIds := extractIdsFromOpenApiReferences(setting.ServiceEngineGroupRefs)
+		if err := d.Set("service_engine_group_refs", groupIds); err != nil {
+			return fmt.Errorf("error storing 'service_engine_group_refs': %s", err)
+		}
 	}
 	return nil
 }

@@ -123,3 +123,29 @@ func TestSetTmOrgRegionalNetworkingAviSettingDataWithNullableFields(t *testing.T
 		t.Fatalf("status = %q, want empty string for null API value", got)
 	}
 }
+
+func TestSetTmOrgRegionalNetworkingAviSettingDataPreservesInactiveConfiguration(t *testing.T) {
+	data := schema.TestResourceDataRaw(t, resourceVcfaOrgRegionalNetworkingAviSetting().Schema, map[string]interface{}{
+		"regional_networking_setting_id": "urn:vcloud:regionalNetworkingSetting:one",
+		"active":                         true,
+		"service_engine_group_mode":      "PROVIDER_MANAGED",
+		"service_engine_quota":           60,
+		"service_engine_group_refs":      []interface{}{"urn:vcloud:serviceEngineGroup:one"},
+	})
+
+	if err := setTmOrgRegionalNetworkingAviSettingData(data, &types.TmRegionalNetworkingAviSetting{Active: false}); err != nil {
+		t.Fatalf("setTmOrgRegionalNetworkingAviSettingData() error = %v", err)
+	}
+	if got := data.Get("active").(bool); got {
+		t.Fatal("active = true, want false")
+	}
+	if got := data.Get("service_engine_group_mode").(string); got != "PROVIDER_MANAGED" {
+		t.Fatalf("service_engine_group_mode = %q, want PROVIDER_MANAGED", got)
+	}
+	if got := data.Get("service_engine_quota").(int); got != 60 {
+		t.Fatalf("service_engine_quota = %d, want 60", got)
+	}
+	if got := data.Get("service_engine_group_refs").(*schema.Set).Len(); got != 1 {
+		t.Fatalf("service_engine_group_refs count = %d, want 1", got)
+	}
+}
