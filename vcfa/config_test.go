@@ -485,20 +485,51 @@ func setupVcAndNsx() (func() error, error) {
 		if vcfaTestVerbose {
 			fmt.Println("# Cleaning up shared vCenter and NSX Manager")
 		}
-		err := nsxCleanup()
-		if err != nil {
-			return fmt.Errorf("error cleaning up deferred NSX Manager: %s", err)
-		}
-		err = vcCleanup()
-		if err != nil {
-			return fmt.Errorf("error cleaning up deferred vCenter: %s", err)
-		}
-
-		return nil
-
+		return cleanupVcAndNsx(nsxCleanup, vcCleanup)
 	}
 
 	return cleanupFunc, nil
+}
+
+func cleanupVcAndNsx(nsxCleanup, vcCleanup func() error) error {
+	if nsxCleanup != nil {
+		if err := nsxCleanup(); err != nil {
+			return fmt.Errorf("error cleaning up deferred NSX Manager: %s", err)
+		}
+	}
+	if vcCleanup != nil {
+		if err := vcCleanup(); err != nil {
+			return fmt.Errorf("error cleaning up deferred vCenter: %s", err)
+		}
+	}
+	return nil
+}
+
+func TestCleanupVcAndNsxAllowsReusedInfrastructure(t *testing.T) {
+	if err := cleanupVcAndNsx(nil, nil); err != nil {
+		t.Fatalf("cleanupVcAndNsx(nil, nil) error = %v", err)
+	}
+}
+
+func TestCleanupVcAndNsxRunsAvailableCleanup(t *testing.T) {
+	called := false
+	err := cleanupVcAndNsx(nil, func() error {
+		called = true
+		return nil
+	})
+	if err != nil {
+		t.Fatalf("cleanupVcAndNsx() error = %v", err)
+	}
+	if !called {
+		t.Fatal("vCenter cleanup was not called")
+	}
+}
+
+func TestCleanupVcAndNsxReportsCleanupFailure(t *testing.T) {
+	err := cleanupVcAndNsx(func() error { return fmt.Errorf("cleanup failed") }, nil)
+	if err == nil || !strings.Contains(err.Error(), "deferred NSX Manager: cleanup failed") {
+		t.Fatalf("cleanupVcAndNsx() error = %v", err)
+	}
 }
 
 func getOrCreateNsxtManager(tmClient *govcd.VCDClient) (*govcd.NsxtManagerOpenApi, func() error, error) {

@@ -17,6 +17,13 @@ import (
 
 const labelVcfaOrgNetworking = "Organization Networking Settings"
 
+const minimumApiVersionForTmOrgNetworkingSettings = "40.0"
+
+type tmOrgNetworkingSettingsReset struct {
+	NetworkingTenancyEnabled bool    `json:"networkingTenancyEnabled"`
+	OrgNameForLogs           *string `json:"orgNameForLogs"`
+}
+
 func resourceVcfaOrgNetworking() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcfaOrgNetworkingCreateUpdate,
@@ -107,17 +114,27 @@ func resourceVcfaOrgNetworkingDelete(ctx context.Context, d *schema.ResourceData
 		return diag.Errorf("error retrieving %s: %s", labelVcfaOrg, err)
 	}
 
-	// reset settings
-	resetSettings := &types.TmOrgNetworkingSettings{
-		OrgNameForLogs: "",
-	}
-
-	_, err = org.UpdateOrgNetworkingSettings(resetSettings)
+	err = resetOrgNetworkingSettings(tmClient, org.TmOrg.ID)
 	if err != nil {
 		return diag.Errorf("error removing Org Network Settings: %s", err)
 	}
 
 	return nil
+}
+
+func resetOrgNetworkingSettings(tmClient *VCDClient, orgID string) error {
+	endpoint := fmt.Sprintf(types.OpenApiPathVersion1_0_0+types.OpenApiEndpointTmOrgNetworkingSettings, orgID)
+	urlRef, err := tmClient.Client.OpenApiBuildEndpoint(endpoint)
+	if err != nil {
+		return fmt.Errorf("error building Organization Networking Settings endpoint: %s", err)
+	}
+
+	resetSettings := &tmOrgNetworkingSettingsReset{
+		NetworkingTenancyEnabled: false,
+		OrgNameForLogs:           nil,
+	}
+	updatedSettings := &types.TmOrgNetworkingSettings{}
+	return tmClient.Client.OpenApiPutItem(minimumApiVersionForTmOrgNetworkingSettings, urlRef, nil, resetSettings, updatedSettings, nil)
 }
 
 func resourceVcfaOrgNetworkingImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

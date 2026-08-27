@@ -122,6 +122,9 @@ func TestSetOrgIdpImportGroupData(t *testing.T) {
 	if got := data.Get("provider_type").(string); got != group.Group.ProviderType {
 		t.Fatalf("provider_type = %q, want %q", got, group.Group.ProviderType)
 	}
+	if got := data.Get("inherit_group_roles").(bool); got {
+		t.Fatal("inherit_group_roles = true, want false")
+	}
 	if got := data.Get("role_ids").(*schema.Set).Len(); got != 1 {
 		t.Fatalf("role_ids count = %d, want 1", got)
 	}
