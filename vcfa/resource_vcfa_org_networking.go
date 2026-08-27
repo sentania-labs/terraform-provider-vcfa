@@ -129,6 +129,9 @@ func resetOrgNetworkingSettings(tmClient *VCDClient, orgID string) error {
 		return fmt.Errorf("error building Organization Networking Settings endpoint: %s", err)
 	}
 
+	// The SDK type uses a plain string for OrgNameForLogs, so its update helper
+	// can send only an empty string. VCFA 9.1 treats that as a globally unique
+	// value. Use the endpoint directly so JSON null releases the setting.
 	resetSettings := &tmOrgNetworkingSettingsReset{
 		NetworkingTenancyEnabled: false,
 		OrgNameForLogs:           nil,
