@@ -349,6 +349,7 @@ func setOrgIdpImportGroupData(d *schema.ResourceData, group *govcd.OpenApiGroup)
 	d.SetId(group.Group.ID)
 	dSet(d, "name", group.Group.Name)
 	dSet(d, "provider_type", group.Group.ProviderType)
+	dSet(d, "inherit_group_roles", false)
 	if group.Group.OrgEntityRef != nil {
 		dSet(d, "org_id", group.Group.OrgEntityRef.ID)
 	}
